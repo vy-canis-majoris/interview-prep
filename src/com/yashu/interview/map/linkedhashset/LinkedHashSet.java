@@ -1,11 +1,15 @@
-package HashSet;
-import java.util.InputMismatchException;
-public class HashSet<T> implements OrderedSet<T>, Container<T>{
+package com.yashu.interview.map.linkedhashset;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class LinkedHashSet<T> implements OrderedSet<T>{
 
 	private	Node<T>[] array;
 	private ArrayIndexCalculator indexCalculator;
 	private LinkedList<T> linkedList;
-	private int count = 0;
+	private int listCount = 0;
+	
 
 
 	/**
@@ -13,21 +17,26 @@ public class HashSet<T> implements OrderedSet<T>, Container<T>{
 	 * @param initialSize - Initial size of the set
 	 */
 	@SuppressWarnings("unchecked")
-	public HashSet(int initialSize){
+	public LinkedHashSet(int initialSize){
+		if(initialSize<=0){
+			throw new IllegalArgumentException();
+		}else{
 		array = new Node[initialSize];
 		indexCalculator = new ArrayIndexCalculator();
 		linkedList = new LinkedList<T>();
+		}
+	
 	}
 	 
 	// Package visible only - for testing purposes
 	@SuppressWarnings("unchecked")
-	HashSet(int initialSize, ArrayIndexCalculator indexCalculator) {
+	LinkedHashSet(int initialSize, ArrayIndexCalculator indexCalculator) {
 		array = new Node[initialSize];
 		this.indexCalculator = indexCalculator;
 		linkedList = new LinkedList<T>();
 	}
-	// Returns the size of the Array.
-	public int getLengthOfArray() {
+	// Returns the size of the Array - for testing purposes
+        int getLengthOfArray() {
 		return array.length;
 	}
 
@@ -37,34 +46,40 @@ public class HashSet<T> implements OrderedSet<T>, Container<T>{
 	}
 	
 	//Iterator
-	private class LinkedHashSetIterator implements MyIterator<T>{
+	 class LinkedHashSetIterator implements Iterator<Object>{
 		private Node<T> temp ;
 		
 		public LinkedHashSetIterator(){
 		temp = null;
 		}
-		@Override
+		
 		public boolean hasNext() {
 			return temp!=linkedList.getTail();
 		}
-
-		@Override
+		
 		public Object next() {
 			if(temp == null){
-				temp = linkedList.getHead() ;
+				temp = linkedList.getHead();
+				if(temp==null){
+					throw new NoSuchElementException();
+				}
 				return temp.getData();
-			}
+			}else{
+				if(temp.getNext() == null){
+					throw new NoSuchElementException();
+				}
 			temp = temp.getNext();
-			if(this.hasNext()){
-				return temp.getData();
 			}
 			return temp.getData();
-		}
+		  }
+		
+		 public void remove() {
+                 throw new UnsupportedOperationException();
+         }
 		
 	}
 	
-	@Override
-	public MyIterator<T> iterator() {
+	public Iterator<Object> iterator() {
 		return new LinkedHashSetIterator();
 	}
 	
@@ -75,17 +90,16 @@ public class HashSet<T> implements OrderedSet<T>, Container<T>{
 		//Checks uniqueness of the set.
 		if(exists(value)){return;}
 		//Doubles the size of Array if it is full.
-		if(count == array.length){
-			array = doubleArray(array.length);
+		if(listCount == (2*array.length)){
+			doubleArray(array.length);
 		}
-		count++;
+		listCount++;
 		Node<T> newNode = new Node<T>(value);
 		//Using the Hash Function the index of the node is determined.
 		int indexOfString = hashFunction(value);
 		//If the index is not null, collision is avoided using LinkedList. 
 		if(collision(value)){
-			linkedList.setTail(avoidCollision(value,newNode,linkedList.getTail(),indexOfString));
-			count--;
+			avoidCollision(newNode,linkedList.getTail(),indexOfString);
 			return;
 		}
 		insertIntoArray(indexOfString, newNode);
@@ -93,22 +107,18 @@ public class HashSet<T> implements OrderedSet<T>, Container<T>{
 	}
 
 
-	Node<T>[] doubleArray(int length) {
-		@SuppressWarnings("unchecked")
-		Node<T>[] temp = new Node[length];
-		for(int i = 0;i<length;i++){
-			temp[i] = array[i];
-		}
+	void doubleArray(int length) {
+		Node<T>[] temp = array;
 		createNewArray(2*length);
-		@SuppressWarnings("unchecked")
-		Node<T>[] hashSetArray = new Node[2*length];
 		for(int i =0;i<length;i++){
-			hashSetArray[i] = temp[i];
+			if(temp[i]!=null){
+			int tempIndex = hashFunction(temp[i].getData());
+			array[tempIndex] = temp[i];
+			}
 		}
-		return hashSetArray;
 	}
 
-	Node<T> avoidCollision(T value, Node<T> newNode, Node<T> tail, int indexOfString) {
+	void avoidCollision(Node<T> newNode, Node<T> tail, int indexOfString) {
 		Node<T> temp = array[indexOfString];
 		while(temp.getRight()!=null){
 			temp = temp.getRight();
@@ -117,7 +127,7 @@ public class HashSet<T> implements OrderedSet<T>, Container<T>{
 		linkedList.getTail().setNext(newNode);
 		newNode.setPrevious(tail);
 		linkedList.setTail(linkedList.getTail().getNext());
-		return linkedList.getTail();
+	
 	}
 
 	private boolean collision(T value) {
@@ -147,43 +157,36 @@ public class HashSet<T> implements OrderedSet<T>, Container<T>{
 		return indexCalculator.getIndex(value,array.length);
 	}
 	
-	public void print() {
-		Node<T> temp = linkedList.getHead();
-		if(linkedList.getHead() == null){
-			System.out.println("Empty list!");
-			return;
-		}else{ 
-		while(temp!=null){
-			System.out.println(temp.getData());
-			temp = temp.getNext();
-		}
-		}
-	}
    //Returns true if set is empty
 	boolean isEmpty(){
-		return linkedList.getHead()==null;
+		return linkedList.getHead() == null;
 	}
 	/**
 	 * Removes specified element from the set if it is present.
 	 */
-	public void delete(T value) {
+	public boolean delete(T value) {
+		
+		if(value == null){
+			throw new IllegalArgumentException();
+		}
 		/**
-		 * If the element doesn't exists 
-		 * @throw InputMisMatchException().
+		 * If the element doesn't exists returns false.
 		 */
 		if(!exists(value)){
-			throw new InputMismatchException();
+			return false;
 		}else{
 			int index = hashFunction(value);
 			Node<T> element = array[index];
 			if(isCollisionLinkedList(element)){
 				Node<T> newNode = deleteLinkedList(element,value);
 				array[index] = newNode;
+				return true;
 			}else{
 				array[index] = null;
 				linkedList.delete(element);
 			} 
 		}
+		return true;
 				 
 	}
 
@@ -192,11 +195,11 @@ public class HashSet<T> implements OrderedSet<T>, Container<T>{
 			linkedList.delete(element);
 			return element.getNext();
 		}else{
-			Node<T> previous = element;
+			Node<T> previous = null;
 			Node<T> current = element;
 			while(current!=null){
 				if(current.getData().equals(value)){
-					 linkedList.delete(current);
+					linkedList.delete(current);
 					previous.setRight(current.getRight());
 				}
 				previous = current;
