@@ -1,36 +1,50 @@
-package HashSet;
-
-import static org.junit.Assert.*;
-
-import java.util.Collection;
-import java.util.InputMismatchException;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-
-
+package com.yashu.interview.map.linkedhashset;
 
 import static org.mockito.Mockito.when;
+import org.junit.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.Before;
-import org.junit.Test;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.NoSuchElementException;
+
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 
-
-import HashSet.HashSet;
-
 public class LinkedHashSetTest {
 
-	private HashSet<String> actualList;
-	private LinkedHashSet<String> expectedList;
+	private com.yashu.interview.map.linkedhashset.LinkedHashSet<String> actualList;
+	private java.util.LinkedHashSet<String> expectedList;
 	
 	@Before
 	public void setUp() {
-		actualList = Mockito.spy(new HashSet<>(4));
-		expectedList = new LinkedHashSet<>();
+		actualList = Mockito.spy(new com.yashu.interview.map.linkedhashset.LinkedHashSet<String>(4));
+		expectedList = new LinkedHashSet<String>();
 	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testIllegalArraySize(){
+		ArrayIndexCalculator indexCalculator = new ArrayIndexCalculator();
+		indexCalculator.getIndex("yashu", 0);
+		
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testNullObject(){
+		ArrayIndexCalculator indexCalculator = new ArrayIndexCalculator();
+		indexCalculator.getIndex(null, 4);
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testInitialArraySize(){
+		actualList = new com.yashu.interview.map.linkedhashset.LinkedHashSet<String>(-1);
+	}
+
 	
 	@Test
 	public void testInsertionOrder(){
@@ -62,6 +76,22 @@ public class LinkedHashSetTest {
 		assertTrue(actualList.isEmpty());
 	}
 	
+	@Test(expected = NoSuchElementException.class)
+	public void testIteratorNextWhenEmpty(){
+		Iterator<?> iter = actualList.iterator();
+		iter.next();
+	}
+	
+	@Test(expected = NoSuchElementException.class)
+	public void testIteratorNextSingleElement(){
+		Iterator<?> iter = actualList.iterator();
+		actualList.insert("yashu");
+		iter.next();
+		iter.next();
+	}
+	
+	
+	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNull(){
 		actualList.insert(null);
@@ -75,11 +105,16 @@ public class LinkedHashSetTest {
 		assertTrue(actualList.isEmpty());
 	}
 	
-	@Test(expected = InputMismatchException.class)
+	@Test
 	public void testDeletionOfNonexistentElement(){
 		insertIntoActualList("yashu","yash");
-		actualList.delete("uttam"); 
+		assertFalse(actualList.delete("uttam")); 
 		
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testDeletingNull(){
+		actualList.delete(null);
 	}
 	@Test
 	public void testInsert(){
@@ -96,10 +131,8 @@ public class LinkedHashSetTest {
 		when(actualList.hashFunction("samatha")).thenReturn(2);
 		
 		insertIntoActualList("yashu","uttam","samatha");
-				
-		Mockito.verify(actualList, Mockito.times(3)).hashFunction(Matchers.eq("yashu"));
+		mockitoVerify(3,"yashu","samatha");
 		Mockito.verify(actualList, Mockito.times(4)).hashFunction(Matchers.eq("uttam"));
-		Mockito.verify(actualList, Mockito.times(3)).hashFunction(Matchers.eq("samatha"));
 		
 		
 		
@@ -111,11 +144,10 @@ public class LinkedHashSetTest {
 		verifyLists(expectedList,actualList);	
 	}
 	
-	
 	@Test
 	public void testDeletionFromCollsionListTail2(){
 		ArrayIndexCalculator indexCalculator = Mockito.mock(ArrayIndexCalculator.class);
-		actualList = new HashSet<>(4, indexCalculator);
+		actualList = new com.yashu.interview.map.linkedhashset.LinkedHashSet<String>(4, indexCalculator);
 		
 		when(indexCalculator.getIndex("yashu", 4)).thenReturn(1);
 		when(indexCalculator.getIndex("uttam", 4)).thenReturn(1);
@@ -145,8 +177,7 @@ public class LinkedHashSetTest {
 		insertIntoActualList("yashu","uttam","samatha");
 		
 		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("yashu"));
-		Mockito.verify(actualList,Mockito.times(4)).hashFunction(Matchers.eq("uttam"));
-		Mockito.verify(actualList,Mockito.times(4)).hashFunction(Matchers.eq("samatha"));
+		mockitoVerify(4,"uttam","samatha");
 		
 		actualList.delete("uttam");
 		insertIntoExpectedList("yashu","uttam","samatha");
@@ -163,8 +194,7 @@ public class LinkedHashSetTest {
 		insertIntoActualList("yashu","uttam","samatha");
 		
 		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("yashu"));
-		Mockito.verify(actualList,Mockito.times(4)).hashFunction(Matchers.eq("uttam"));
-		Mockito.verify(actualList,Mockito.times(4)).hashFunction(Matchers.eq("samatha"));
+		mockitoVerify(4,"uttam","samatha");
 		
 		actualList.delete("yashu");
 		insertIntoExpectedList("yashu","uttam","samatha");
@@ -174,15 +204,11 @@ public class LinkedHashSetTest {
 	
 	@Test
 	public void testDeletionFromOrderingListTail(){
-		when(actualList.hashFunction("yashu")).thenReturn(1);
-		when(actualList.hashFunction("uttam")).thenReturn(2);
-		when(actualList.hashFunction("samatha")).thenReturn(3);
+		mockitoWhen("yashu","uttam","samatha");
 		
 		insertIntoActualList("yashu","uttam","samatha");
 		
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("yashu"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("uttam"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("samatha"));
+		mockitoVerify(3,"yashu","uttam","samatha");
 		
 		actualList.delete("samatha");
 		insertIntoExpectedList("yashu","uttam","samatha");
@@ -192,15 +218,14 @@ public class LinkedHashSetTest {
 	
 	@Test
 	public void testDeletionFromOrderingListMiddle(){
+		mockitoWhen("yashu","uttam","samatha");
 		when(actualList.hashFunction("yashu")).thenReturn(1);
 		when(actualList.hashFunction("uttam")).thenReturn(2);
 		when(actualList.hashFunction("samatha")).thenReturn(3);
 		
 		insertIntoActualList("yashu","uttam","samatha");
 		
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("yashu"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("uttam"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("samatha"));
+		mockitoVerify(3,"yashu","uttam","samatha");
 		
 		actualList.delete("uttam");
 		insertIntoExpectedList("yashu","uttam","samatha");
@@ -210,15 +235,11 @@ public class LinkedHashSetTest {
 	
 	@Test
 	public void testDeletionFromOrderingListHead(){
-		when(actualList.hashFunction("yashu")).thenReturn(1);
-		when(actualList.hashFunction("uttam")).thenReturn(2);
-		when(actualList.hashFunction("samatha")).thenReturn(3);
+		mockitoWhen("yashu","uttam","samatha");
 		
 		insertIntoActualList("yashu","uttam","samatha");
 		
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("yashu"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("uttam"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("samatha"));
+		mockitoVerify(3,"yashu","uttam","samatha");
 		
 		actualList.delete("yashu");
 		insertIntoExpectedList("yashu","uttam","samatha");
@@ -228,15 +249,10 @@ public class LinkedHashSetTest {
 	
 	@Test
 	public void testDeletingOrderingLinkedListElements(){
-		when(actualList.hashFunction("yashu")).thenReturn(1);
-		when(actualList.hashFunction("uttam")).thenReturn(2);
-		when(actualList.hashFunction("samatha")).thenReturn(3);
+		mockitoWhen("yashu","uttam","samatha");
 		
 		insertIntoActualList("yashu","uttam","samatha");
-		
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("yashu"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("uttam"));
-		Mockito.verify(actualList,Mockito.times(3)).hashFunction(Matchers.eq("samatha"));
+		mockitoVerify(3,"yashu","uttam","samatha");
 		
 		deleteElementsFromActualList("yashu","uttam","samatha");
 		insertIntoExpectedList("yashu","uttam","samatha");
@@ -254,21 +270,33 @@ public class LinkedHashSetTest {
 	
 	@Test
 	public void testDoubleArraySize(){
-		when(actualList.hashFunction("cherry")).thenReturn(0);
-		when(actualList.hashFunction("yashu")).thenReturn(1);
-		when(actualList.hashFunction("uttam")).thenReturn(2);
-		when(actualList.hashFunction("samatha")).thenReturn(3);
-		insertIntoActualList("yashu","uttam","samatha","cherry","divya");
+		insertIntoActualList("yashu","uttam","samatha","cherry","divya","kumar","prabha","rahul","jasdnk");
+		insertIntoExpectedList("yashu","uttam","samatha","cherry","divya","kumar","prabha","rahul","jasdnk");
 		Mockito.verify(actualList).doubleArray(4);
 		assertEquals(8,actualList.getLengthOfArray());
+		verifyLists(expectedList,actualList);
 		
 	}
+	
+	@Test
+	public void testHashValueAfterDoublingSize(){
+		insertIntoActualList("yashu","uttam","samatha","cherry","divya","kumar","prabha");
+		int hashValueWithInitialSize = actualList.hashFunction("yashu");
+		insertIntoExpectedList("yashu","uttam","samatha","cherry","divya","kumar","prabha");
+		insertIntoActualList("rahul","iowa","yashu");
+		insertIntoExpectedList("rahul","iowa","yashu");
+		Mockito.verify(actualList).doubleArray(4);
+		assertEquals(8,actualList.getLengthOfArray());
+		int hashValueWithDoubleSize = actualList.hashFunction("yashu");
+		assertEquals(hashValueWithInitialSize,hashValueWithDoubleSize);
+		verifyLists(expectedList,actualList);
+	}
+	
 
 	
-	
-	private void verifyLists(Collection<String> expected, HashSet<String> actual) {
+	private void verifyLists(Collection<String> expected, com.yashu.interview.map.linkedhashset.LinkedHashSet<String> actual) {
 		Iterator<String> expectedIterator = expected.iterator();
-		MyIterator<String> actualIterator = actual.iterator();
+		Iterator<?> actualIterator = actual.iterator();
 		
 		while(expectedIterator.hasNext()) {
 			assertEquals(expectedIterator.next(), actualIterator.next());			
@@ -278,6 +306,17 @@ public class LinkedHashSetTest {
 	private void insertIntoActualList(String ... strings) {
 		for(int i = 0; i < strings.length; i++) {
 			actualList.insert(strings[i]);
+		}
+	}
+	private void mockitoWhen(String ... strings) {
+		for(int i = 0; i < strings.length; i++) {
+			when(actualList.hashFunction(strings[i])).thenReturn(i);
+		}
+	}
+	
+	private void mockitoVerify(int repetitions,String ... strings) {
+		for(int i = 0; i < strings.length; i++) {
+			Mockito.verify(actualList,Mockito.times(repetitions)).hashFunction(Matchers.eq(strings[i]));
 		}
 	}
 	
