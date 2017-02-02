@@ -1,11 +1,11 @@
-package HashSet;
+package com.yashu.interview.map.linkedhashset;
 /**
  * Collection uses Doubly LinkedList.
  * data - To store the element.
  * previous - Pointer to the previous node.
  * next - Pointer to the next node.
  * right - Pointer to the node in collision list.
- * @author Uttam
+ * @author Yashwanth
  *
  * @param <T>
  */
@@ -50,15 +50,11 @@ public class Node<T> {
 		this.right = right;
 	}
 
-
 	public void setData(T data) {
 		this.data = data;
 	}
 
-
 	Node(T data){
 		this.data = data ;
 	}
-	
-
 }
