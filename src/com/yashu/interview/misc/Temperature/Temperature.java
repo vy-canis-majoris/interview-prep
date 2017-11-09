@@ -77,6 +77,8 @@ public class Temperature {
 			temperature = fahrenheitToCelcius(temperature);
 		}else if(measuringUnit.equals(MeasuringUnit.FAHRENHEIT) && initialTemperature.measuringUnit.equals(MeasuringUnit.KELVIN)){
 			temperature = kelvinToCelcius(temperature);
+		}else if(measuringUnit.equals(MeasuringUnit.CELCIUS) && initialTemperature.measuringUnit.equals(MeasuringUnit.FAHRENHEIT)){
+			temperature = celciusToFarenheit(temperature);
 		}
 		
 		
